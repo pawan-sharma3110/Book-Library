@@ -4,7 +4,7 @@ import (
 	"book/controller"
 	"book/database"
 	"book/model"
-	"fmt"
+	"encoding/json"
 	"net/http"
 
 	"github.com/gofrs/uuid"
@@ -58,5 +58,45 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	fmt.Fprintf(w, "user created with id: %v", newUser.ID)
+	response := map[string]string{
+		"message": "User registered successfully",
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	// Ensure database connection
+	db, err := database.DbIN()
+	if err != nil {
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Check HTTP method
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST method allowed", http.StatusBadRequest)
+		return
+	}
+
+	// Check URL path
+	if r.URL.Path != "/login" {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
+	err = r.ParseForm()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	email := r.Form.Get("email")
+	password := r.Form.Get("password")
+
+	token, err := controller.ValidateUser(db, w, email, password)
+	if err != nil {
+		// http.Error(w, "Bad reqest", http.StatusBadRequest)
+		json.NewEncoder(w).Encode(err)
+	}
+	json.NewEncoder(w).Encode(token)
 }

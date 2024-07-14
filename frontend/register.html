@@ -30,6 +30,33 @@
     </style>
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Dream Library</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Products</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary mr-2" href="./login.html">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-success" href="./register.html">Register</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
     <div class="container">
         <div class="card">
             <div class="card-header">
@@ -58,37 +85,25 @@
             </div>
         </div>
     </div>
-    <!-- <script>
-        document.getElementById('registerForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Prevent the default form submission
+    <script>
+        function registerUser(event) {
+            event.preventDefault();
 
-            // Collect form data
-            const formData = {
-                full_name: document.getElementById('full_name').value,
-                email: document.getElementById('email').value,
-                phone_no: document.getElementById('phone_no').value,
-                password: document.getElementById('password').value
-            };
-
-            // Send form data as JSON
+            const formData = new FormData(event.target);
             fetch('/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
+                body: formData
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Success:', data);
-                // Handle successful registration (e.g., display a success message, redirect to another page, etc.)
+                alert(data.message);
             })
             .catch(error => {
                 console.error('Error:', error);
-                // Handle registration error (e.g., display an error message)
+                alert('An error occurred while registering the user.');
             });
-        }); 
-    </script>-->
+        }
+    </script>
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
