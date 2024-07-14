@@ -1,3 +1,89 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Dream Library</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Products</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="btn btn-outline-primary mr-2" href="./login.html">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="btn btn-outline-success" href="./register.html">Register</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2>Register</h2>
+        <form id="registerForm" action="/ragister" method="post">
+            <div class="form-group">
+                <label for="full_name">Full Name:</label>
+                <input type="text" class="form-control" id="full_name" name="full_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone_no">Phone Number:</label>
+                <input type="text" class="form-control" id="phone_no" name="phone_no" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#registerForm').on('submit', function(e){
+                e.preventDefault(); // Prevent the default form submission
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/register',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        alert(response.message);
+                    },
+                    error: function(error) {
+                        alert('Registration failed: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html> -->
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -63,7 +149,7 @@
                 Register
             </div>
             <div class="card-body">
-                <form action="/register" method="POST" target="_blank">
+                <form id="registerForm" action="/ragister" method="post">
                     <div class="form-group">
                         <label for="full_name">Full Name</label>
                         <input type="text" class="form-control" id="full_name" name="full_name" placeholder="Enter your full name" required>
@@ -85,26 +171,53 @@
             </div>
         </div>
     </div>
-    <script>
-        function registerUser(event) {
-            event.preventDefault();
 
-            const formData = new FormData(event.target);
-            fetch('/register', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while registering the user.');
+    <!-- Modal -->
+    <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="responseModalLabel">Message</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalMessage">
+                    <!-- Message will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('registerForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const formData = new FormData(this);
+                fetch('/register', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('modalMessage').textContent = data.message;
+                    $('#responseModal').modal('show');
+                    document.getElementById('registerForm').reset();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('modalMessage').textContent = 'An error occurred while registering the user.';
+                    $('#responseModal').modal('show');
+                });
             });
-        }
+        });
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
