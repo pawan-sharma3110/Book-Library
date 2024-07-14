@@ -4,42 +4,59 @@ import (
 	"book/controller"
 	"book/database"
 	"book/model"
-	"book/utils"
+	"fmt"
 	"net/http"
 
 	"github.com/gofrs/uuid"
 )
 
 func Register(w http.ResponseWriter, r *http.Request) {
+	// Ensure database connection
 	db, err := database.DbIN()
 	if err != nil {
-		http.Error(w, "database error", http.StatusInternalServerError)
+		http.Error(w, "Database error", http.StatusInternalServerError)
+		return
+	}
+	defer db.Close()
+
+	// Check HTTP method
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST method allowed", http.StatusBadRequest)
+		return
 	}
 
-	if r.Method != "POST" {
-		http.Error(w, "Only post methord allowed", http.StatusBadRequest)
-		return
-	}
+	// Check URL path
 	if r.URL.Path != "/register" {
-		http.Error(w, "404 not found", http.StatusNotFound)
+		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
-	var newUser model.User
-	if err := utils.ParseJson(w, r, newUser); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
-	}
-	id, err := uuid.NewV4()
+
+	err = r.ParseForm()
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-	newUser.ID = id
-	newUser.FullName = r.FormValue("full_name")
-	newUser.Email = r.FormValue("email")
-	newUser.PhoneNo = r.FormValue("phone_no")
-	newUser.Password = r.FormValue("password")
+
+	// Create a new User object
+	var newUser model.User
+	newUser.ID, err = uuid.NewV4()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	newUser.FullName = r.Form.Get("full_name")
+	newUser.Email = r.Form.Get("email")
+	newUser.PhoneNo = r.Form.Get("phone_no")
+	newUser.Password = r.Form.Get("password")
+
 	err = controller.InsertUser(db, newUser)
 	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-	utils.WriteJson(w, http.StatusOK, "user created")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	fmt.Fprintf(w, "user created with id: %v", newUser.ID)
 }

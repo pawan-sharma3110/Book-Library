@@ -40,6 +40,6 @@ func InsertUser(db *sql.DB, user model.User) (err error) {
 		return fmt.Errorf("unable to insert user: %v", err)
 	}
 
-	fmt.Println("User inserted successfully")
+	// fmt.Println("User inserted successfully")
 	return nil
 }
