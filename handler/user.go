@@ -8,14 +8,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 func Register(w http.ResponseWriter, r *http.Request) {
 	// Ensure database connection
 	db, err := database.DbIN()
 	if err != nil {
-		http.Error(w, "Database error", http.StatusInternalServerError)
+		http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer db.Close()
@@ -34,28 +34,27 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	err = r.ParseForm()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Error parsing form: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Create a new User object
 	var newUser model.User
-	newUser.ID, err = uuid.NewV4()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	newUser.ID = uuid.New()
 	newUser.FullName = r.Form.Get("full_name")
 	newUser.Email = r.Form.Get("email")
 	newUser.PhoneNo = r.Form.Get("phone_no")
 	newUser.Password = r.Form.Get("password")
-	fmt.Println(string(newUser.Email))
-	fmt.Println(string(newUser.FullName))
-	fmt.Println(string(newUser.PhoneNo))
-	fmt.Println(string(newUser.Password))
+
+	fmt.Println("User Details:")
+	fmt.Println("Email:", newUser.Email)
+	fmt.Println("Full Name:", newUser.FullName)
+	fmt.Println("Phone No:", newUser.PhoneNo)
+	fmt.Println("Password:", newUser.Password)
+
 	err = controller.InsertUser(db, newUser)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Error inserting user: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

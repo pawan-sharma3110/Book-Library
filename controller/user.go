@@ -4,50 +4,52 @@ import (
 	"book/model"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var jwtKey = []byte("your_secret_key")
 
 func createUserTable(db *sql.DB) {
-	createTableSQL := `CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY,
-        full_name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL,
-        phone_no VARCHAR(15),
-        password VARCHAR(100) NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-    )`
+	createTableSQL := `
+	CREATE TABLE IF NOT EXISTS users (
+		id TEXT PRIMARY KEY,
+		full_name TEXT,
+		email TEXT UNIQUE,
+		phone_no TEXT,
+		password TEXT,
+		created_at TIMESTAMP
+	);
+	`
 	_, err := db.Exec(createTableSQL)
 	if err != nil {
-		panic(err)
-
+		log.Fatalf("unable to create table: %v", err)
 	}
 }
-func InsertUser(db *sql.DB, user model.User) (err error) {
+
+func InsertUser(db *sql.DB, user model.User) error {
+	// Create user table if not exists
 	createUserTable(db)
 
-	insertUserSQL := `INSERT INTO users (id, full_name, email, phone_no, password, created_at)
-    VALUES ($1, $2, $3, $4, $5, $6);`
-	hasPass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	insertUserSQL := `
+		INSERT INTO users (id, full_name, email, phone_no, password, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6);
+	`
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("error while create passwod in hash: %v", err)
+		return fmt.Errorf("error while creating password hash: %v", err)
 	}
 
-	_, err = db.Exec(insertUserSQL, user.ID, user.FullName, user.Email, user.PhoneNo, hasPass, time.Now())
+	_, err = db.Exec(insertUserSQL, user.ID, user.FullName, user.Email, user.PhoneNo, hashedPassword, time.Now())
 	if err != nil {
 		return fmt.Errorf("unable to insert user: %v", err)
 	}
-	// fmt.Println(string(user.Email))
-	// fmt.Println(string(user.FullName))
-	// fmt.Println(string(user.PhoneNo))
-	// fmt.Println(string(user.Password))
-	
+
 	return nil
 }
 

@@ -1,6 +1,6 @@
 package model
 
-import "github.com/gofrs/uuid"
+import "github.com/google/uuid"
 
 type User struct {
 	ID        uuid.UUID `json:"id"`
