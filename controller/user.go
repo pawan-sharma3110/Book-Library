@@ -18,7 +18,7 @@ func createUserTable(db *sql.DB) {
 	createTableSQL := `CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY,
         full_name VARCHAR(100) NOT NULL,
-        email VARCHAR(100) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL,
         phone_no VARCHAR(15),
         password VARCHAR(100) NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -43,7 +43,11 @@ func InsertUser(db *sql.DB, user model.User) (err error) {
 	if err != nil {
 		return fmt.Errorf("unable to insert user: %v", err)
 	}
-
+	// fmt.Println(string(user.Email))
+	// fmt.Println(string(user.FullName))
+	// fmt.Println(string(user.PhoneNo))
+	// fmt.Println(string(user.Password))
+	
 	return nil
 }
 
