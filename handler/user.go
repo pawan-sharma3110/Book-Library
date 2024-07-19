@@ -5,7 +5,6 @@ import (
 	"book/database"
 	"book/model"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -45,12 +44,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	newUser.Email = r.Form.Get("email")
 	newUser.PhoneNo = r.Form.Get("phone_no")
 	newUser.Password = r.Form.Get("password")
-
-	fmt.Println("User Details:")
-	fmt.Println("Email:", newUser.Email)
-	fmt.Println("Full Name:", newUser.FullName)
-	fmt.Println("Phone No:", newUser.PhoneNo)
-	fmt.Println("Password:", newUser.Password)
 
 	err = controller.InsertUser(db, newUser)
 	if err != nil {

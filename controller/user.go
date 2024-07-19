@@ -47,7 +47,7 @@ func InsertUser(db *sql.DB, user model.User) error {
 
 	_, err = db.Exec(insertUserSQL, user.ID, user.FullName, user.Email, user.PhoneNo, hashedPassword, time.Now())
 	if err != nil {
-		return fmt.Errorf("unable to insert user: %v", err)
+		return fmt.Errorf("provided email already register")
 	}
 
 	return nil
