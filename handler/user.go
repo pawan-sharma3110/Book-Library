@@ -5,6 +5,7 @@ import (
 	"book/database"
 	"book/model"
 	"encoding/json"
+	
 	"net/http"
 
 	"github.com/google/uuid"
@@ -47,7 +48,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	err = controller.InsertUser(db, newUser)
 	if err != nil {
-		http.Error(w, "Error inserting user: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -80,6 +81,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not found", http.StatusNotFound)
 		return
 	}
+
 	err = r.ParseForm()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -88,11 +90,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
-
+	
 	token, err := controller.ValidateUser(db, w, email, password)
 	if err != nil {
-		// http.Error(w, "Bad reqest", http.StatusBadRequest)
-		json.NewEncoder(w).Encode(err)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
 	}
-	json.NewEncoder(w).Encode(token)
+	// "Invalid email or password"
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }

@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte("your_secret_key")
+var jwtKey = []byte("dream_library")
 
 func createUserTable(db *sql.DB) {
 	createTableSQL := `
@@ -77,25 +77,31 @@ func setCookies(w http.ResponseWriter, userID uuid.UUID, token, email string) {
 		HttpOnly: true,
 	})
 }
-func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password string) (tokenString string, err error) {
+func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password string) (string, error) {
+	fmt.Println(email)
+	fmt.Println(password)
 	type Claims struct {
 		Email string    `json:"email"`
 		ID    uuid.UUID `json:"id"`
 		jwt.StandardClaims
 	}
+
 	// Fetch user from the database
 	var user model.User
-	err = db.QueryRow("SELECT id, full_name, email, phone_no, password FROM users WHERE email = $1", email).Scan(&user.ID, &user.FullName, &user.Email, &user.PhoneNo, &user.Password)
+	err := db.QueryRow("SELECT id, full_name, email, phone_no, password FROM users WHERE email = $1", email).Scan(&user.ID, &user.FullName, &user.Email, &user.PhoneNo, &user.Password)
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-		return "", err
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("no user found with email %s", email)
+		}
+		return "", fmt.Errorf("error querying database: %v", err)
 	}
+
 	// Compare hashed password
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-		return "", err
+		return "", fmt.Errorf("incorrect password")
 	}
+
 	// Generate JWT
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
@@ -106,12 +112,13 @@ func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password stri
 		},
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err = token.SignedString(jwtKey)
+	tokenString, err := token.SignedString(jwtKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error signing token: %v", err)
 	}
+
 	setCookies(w, user.ID, tokenString, user.Email)
 	return tokenString, nil
 }
