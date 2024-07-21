@@ -2,18 +2,15 @@ package controller
 
 import (
 	"book/model"
+	"book/utils"
 	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
-
-var jwtKey = []byte("dream_library")
 
 func createUserTable(db *sql.DB) {
 	createTableSQL := `
@@ -40,7 +37,7 @@ func InsertUser(db *sql.DB, user model.User) error {
 		INSERT INTO users (id, full_name, email, phone_no, password, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6);
 	`
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPassword, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return fmt.Errorf("error while creating password hash: %v", err)
 	}
@@ -78,13 +75,6 @@ func setCookies(w http.ResponseWriter, userID uuid.UUID, token, email string) {
 	})
 }
 func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password string) (string, error) {
-	fmt.Println(email)
-	fmt.Println(password)
-	type Claims struct {
-		Email string    `json:"email"`
-		ID    uuid.UUID `json:"id"`
-		jwt.StandardClaims
-	}
 
 	// Fetch user from the database
 	var user model.User
@@ -97,28 +87,16 @@ func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password stri
 	}
 
 	// Compare hashed password
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
+	isValid := utils.CheckPasswordHash(password, user.Password)
+	if !isValid {
 		return "", fmt.Errorf("incorrect password")
 	}
 
 	// Generate JWT
-	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &Claims{
-		Email: user.Email,
-		ID:    user.ID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expirationTime.Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString(jwtKey)
+	token, err := utils.GenerateJWT(user.ID, user.Email, user.FullName)
 	if err != nil {
-		return "", fmt.Errorf("error signing token: %v", err)
+		return "", fmt.Errorf("falied to gernate jwt")
 	}
-
-	setCookies(w, user.ID, tokenString, user.Email)
-	return tokenString, nil
+	setCookies(w, user.ID, token, user.Email)
+	return token, nil
 }

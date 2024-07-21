@@ -4,8 +4,9 @@ import (
 	"book/controller"
 	"book/database"
 	"book/model"
+	"book/utils"
 	"encoding/json"
-	
+
 	"net/http"
 
 	"github.com/google/uuid"
@@ -90,12 +91,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
-	
+
 	token, err := controller.ValidateUser(db, w, email, password)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	_, err = utils.ValidateJWT(token)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 	// "Invalid email or password"
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	
 }
