@@ -74,29 +74,29 @@ func setCookies(w http.ResponseWriter, userID uuid.UUID, token, email string) {
 		HttpOnly: true,
 	})
 }
-func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password string) (string, error) {
+func ValidateUser(db *sql.DB, w http.ResponseWriter, email string, password string) (string, string, error) {
 
 	// Fetch user from the database
 	var user model.User
 	err := db.QueryRow("SELECT id, full_name, email, phone_no, password FROM users WHERE email = $1", email).Scan(&user.ID, &user.FullName, &user.Email, &user.PhoneNo, &user.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", fmt.Errorf("no user found with email %s", email)
+			return "", "", fmt.Errorf("no user found with email %s", email)
 		}
-		return "", fmt.Errorf("error querying database: %v", err)
+		return "", "", fmt.Errorf("error querying database: %v", err)
 	}
 
 	// Compare hashed password
 	isValid := utils.CheckPasswordHash(password, user.Password)
 	if !isValid {
-		return "", fmt.Errorf("incorrect password")
+		return "", "", fmt.Errorf("incorrect password")
 	}
 
 	// Generate JWT
 	token, err := utils.GenerateJWT(user.ID, user.Email, user.FullName)
 	if err != nil {
-		return "", fmt.Errorf("falied to gernate jwt")
+		return "", "", fmt.Errorf("falied to gernate jwt")
 	}
 	setCookies(w, user.ID, token, user.Email)
-	return token, nil
+	return token, user.FullName, nil
 }

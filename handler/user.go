@@ -5,7 +5,7 @@ import (
 	"book/database"
 	"book/model"
 	"book/utils"
-	"encoding/json"
+	"text/template"
 
 	"net/http"
 
@@ -56,10 +56,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	response := map[string]string{
-		"message": "User registered successfully",
-	}
-	json.NewEncoder(w).Encode(response)
+	// response := map[string]string{
+	// 	"message": "User registered successfully",
+	// }
+	// json.NewEncoder(w).Encode(response)
+	Login(w, r)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +79,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check URL path
-	if r.URL.Path != "/login" {
-		http.Error(w, "Not found", http.StatusNotFound)
-		return
-	}
+	// if r.URL.Path != "/login" {
+	// 	http.Error(w, "Not found", http.StatusNotFound)
+	// 	return
+	// }
 
 	err = r.ParseForm()
 	if err != nil {
@@ -92,7 +93,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	email := r.Form.Get("email")
 	password := r.Form.Get("password")
 
-	token, err := controller.ValidateUser(db, w, email, password)
+	token, fullNAme, err := controller.ValidateUser(db, w, email, password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -102,7 +103,17 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
-	// "Invalid email or password"
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
-	
+	data := struct {
+		FullName string
+	}{
+		FullName: fullNAme,
+	}
+	tmp, err := template.ParseFiles("./frontend/home.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmp.Execute(w, data)
+	// json.NewEncoder(w).Encode(map[string]string{"token": token})
+
 }
