@@ -60,7 +60,17 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// 	"message": "User registered successfully",
 	// }
 	// json.NewEncoder(w).Encode(response)
-	Login(w, r)
+	data := struct {
+		FullName string
+	}{
+		FullName: newUser.FullName,
+	}
+	tmp, err := template.ParseFiles("./frontend/home.html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	tmp.Execute(w, data)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -79,10 +89,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check URL path
-	// if r.URL.Path != "/login" {
-	// 	http.Error(w, "Not found", http.StatusNotFound)
-	// 	return
-	// }
+	if r.URL.Path != "/login" {
+		http.Error(w, "Not found", http.StatusNotFound)
+		return
+	}
 
 	err = r.ParseForm()
 	if err != nil {
@@ -114,6 +124,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tmp.Execute(w, data)
+	
 	// json.NewEncoder(w).Encode(map[string]string{"token": token})
 
 }
